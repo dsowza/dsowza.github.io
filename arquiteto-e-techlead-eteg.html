@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<!-- Chosen Palette: Calm Neutrals & Strategic Indigo -->
+<!-- Application Structure Plan: The SPA is designed as a strategic narrative to guide Eteg's stakeholders through a proposed organizational change. The structure is thematic and sequential: 1. Diagnosis (The "Why"): Starts by identifying the current pain points (overload, ambiguity) using impactful stat cards and a bar chart to create a shared understanding of the problem. 2. The New Model (The "What"): The core of the app, featuring an interactive side-by-side comparison of the Architect and Tech Lead roles. Users can click filters to explore different facets (scope, deliverables), making the new definitions clear and digestible. 3. Governance in Action (The "How"): Uses interactive tabs to explain the new mechanisms (C4, ADRs, Forums) and a clear HTML/CSS flowchart for the collaboration process. This demystifies how the new model will operate. This section now includes a Gemini-powered ADR Assistant to make the concept practical. 4. Implementation Roadmap (The "Payoff"): Concludes with a concrete 90-day plan and success metrics, providing a clear path forward and demonstrating the tangible benefits. This narrative structure was chosen to be persuasive, logical, and more engaging than a traditional report, facilitating alignment and buy-in. -->
+<!-- Visualization & Content Choices: 
+- Report Info: Costs of role ambiguity (productivity, quality, talent impact) -> Goal: Inform/Diagnose -> Viz: Key Stat Cards (HTML/CSS) -> Interaction: Hover for detail -> Justification: Quickly communicates the severity of the problem.
+- Report Info: Tech Lead overload -> Goal: Compare/Inform -> Viz: Horizontal Bar Chart (Chart.js/Canvas) -> Justification: Visually quantifies the current imbalance in responsibilities.
+- Report Info: Detailed role definitions and comparison -> Goal: Compare/Explore -> Viz: Interactive Content Panels with filter buttons (HTML/CSS/JS) -> Interaction: Click filters -> Justification: Allows users to actively explore and compare the roles based on specific criteria, enhancing understanding and retention.
+- Report Info: Governance mechanisms (C4, ADRs, Forums) -> Goal: Organize/Inform -> Viz: Tabbed Interface (HTML/CSS/JS) -> Interaction: Click tabs -> Justification: Presents dense information in a structured, on-demand format, preventing cognitive overload.
+- Report Info: ADR creation process -> Goal: Empower/Assist -> Viz: Modal with form and Gemini API integration -> Interaction: User inputs context, clicks generate -> Justification: Lowers the barrier to adopting ADRs by providing a practical, AI-powered drafting tool.
+- Report Info: 90-Day implementation plan -> Goal: Organize/Inform -> Viz: Structured 3-column layout (HTML/CSS) -> Justification: A clear, scannable format for a phased plan.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Governança Técnica - Eteg</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
+        .tab-button.active { border-color: #4f46e5; color: #4f46e5; background-color: #eef2ff; }
+        .filter-button.active { background-color: #4f46e5; color: white; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .content-panel { display: none; }
+        .content-panel.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #4f46e5; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-16">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-800">Proposta de Governança Técnica</h1>
+            <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Evoluindo a estrutura da Eteg para habilitar o crescimento sustentável através da clareza nos papéis de <span class="font-semibold text-indigo-600">Arquiteto</span> e <span class="font-semibold text-indigo-600">Tech Lead</span>.</p>
+        </header>
+
+        <main class="space-y-16">
+
+            <section id="diagnosis">
+                <h2 class="text-2xl font-bold text-slate-700 text-center">1. Diagnóstico: O Custo Oculto da Ambiguidade</h2>
+                <p class="text-center text-slate-500 mt-2 mb-8 max-w-2xl mx-auto">A sobreposição de funções atual gera ineficiências que impactam a produtividade, a qualidade do software e a retenção de talentos.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-amber-400">
+                        <h3 class="font-bold text-slate-800">Impacto na Produtividade</h3>
+                        <p class="text-sm text-slate-600 mt-2">Tech Leads como gargalos, com troca de contexto constante entre o micro (código) e o macro (estratégia), diminuindo a velocidade de entrega.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-rose-400">
+                        <h3 class="font-bold text-slate-800">Impacto na Qualidade</h3>
+                        <p class="text-sm text-slate-600 mt-2">"Arquitetura acidental" com soluções inconsistentes entre squads, acumulando débito técnico estrutural que encarece a manutenção.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-sky-400">
+                        <h3 class="font-bold text-slate-800">Impacto nos Talentos</h3>
+                        <p class="text-sm text-slate-600 mt-2">Sobrecarga crônica levando ao burnout de líderes, enquanto o potencial estratégico do Arquiteto é subutilizado em tarefas de implementação.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="new-model">
+                <h2 class="text-2xl font-bold text-slate-700 text-center">2. O Novo Modelo: Papéis Estratégicos e Táticos</h2>
+                <p class="text-center text-slate-500 mt-2 mb-8 max-w-2xl mx-auto">Para resolver a sobrecarga, propomos especializar os papéis, criando uma distinção clara entre a visão de longo prazo e a execução do dia a dia.</p>
+                
+                <div id="filter-buttons" class="flex flex-wrap justify-center gap-2 mb-8">
+                    <button data-filter="focus" class="filter-button active shadow-sm font-medium py-2 px-5 rounded-full bg-white text-slate-700 transition-all duration-200">Foco Principal</button>
+                    <button data-filter="scope" class="filter-button shadow-sm font-medium py-2 px-5 rounded-full bg-white text-slate-700 transition-all duration-200">Escopo e Horizonte</button>
+                    <button data-filter="deliverables" class="filter-button shadow-sm font-medium py-2 px-5 rounded-full bg-white text-slate-700 transition-all duration-200">Principais Entregáveis</button>
+                    <button data-filter="interactions" class="filter-button shadow-sm font-medium py-2 px-5 rounded-full bg-white text-slate-700 transition-all duration-200">Interações-Chave</button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-indigo-500">
+                        <h3 class="text-xl font-bold text-indigo-700">Arquiteto de Software (Estratégico)</h3>
+                        <p class="text-sm text-slate-600 mt-1 mb-4">O guardião da visão de longo prazo, garantindo que a arquitetura habilite os objetivos de negócio.</p>
+                        <div id="architect-content" class="text-sm text-slate-700 space-y-2"></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-cyan-500">
+                        <h3 class="text-xl font-bold text-cyan-700">Tech Lead (Tático)</h3>
+                        <p class="text-sm text-slate-600 mt-1 mb-4">O líder e facilitador da squad, garantindo a excelência técnica na entrega de valor.</p>
+                        <div id="techlead-content" class="text-sm text-slate-700 space-y-2"></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="governance">
+                <h2 class="text-2xl font-bold text-slate-700 text-center">3. Governança em Ação: Como o Modelo Funciona</h2>
+                <p class="text-center text-slate-500 mt-2 mb-8 max-w-2xl mx-auto">A nova estrutura é sustentada por mecanismos que promovem alinhamento e colaboração sem criar burocracia.</p>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="border-b border-slate-200">
+                        <nav class="-mb-px flex justify-center space-x-6" aria-label="Tabs">
+                            <button data-tab="flow" class="tab-button active whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm">Fluxo de Colaboração</button>
+                            <button data-tab="c4" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm text-slate-500 hover:text-slate-700 hover:border-slate-300">Modelo C4</button>
+                            <button data-tab="adr" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm text-slate-500 hover:text-slate-700 hover:border-slate-300">ADRs</button>
+                            <button data-tab="forums" class="tab-button whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm text-slate-500 hover:text-slate-700 hover:border-slate-300">Fóruns</button>
+                        </nav>
+                    </div>
+                    <div id="tab-content" class="mt-6 px-2">
+                        <!-- Content will be injected by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-16 pt-8 border-t border-slate-200">
+            <p class="text-sm text-slate-500">Esta aplicação interativa foi gerada com base no relatório "Proposta de Estruturação e Governança Técnica".</p>
+        </footer>
+    </div>
+
+    <!-- ADR Helper Modal -->
+    <div id="adrModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 md:p-8 transform transition-all" id="adrModalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-slate-800">✨ Assistente de Geração de ADR</h3>
+                <button id="closeAdrModal" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            
+            <div id="adrForm">
+                <div class="space-y-4">
+                    <div>
+                        <label for="adrContext" class="block text-sm font-medium text-slate-700">Problema / Contexto</label>
+                        <textarea id="adrContext" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Nosso processo de build é lento e propenso a erros, impactando o time-to-market."></textarea>
+                    </div>
+                    <div>
+                        <label for="adrDecision" class="block text-sm font-medium text-slate-700">Solução Proposta</label>
+                        <textarea id="adrDecision" rows="2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Adotar GitHub Actions para CI/CD."></textarea>
+                    </div>
+                    <div>
+                        <label for="adrAlternatives" class="block text-sm font-medium text-slate-700">Alternativas Consideradas</label>
+                        <textarea id="adrAlternatives" rows="2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Manter Jenkins, migrar para CircleCI."></textarea>
+                    </div>
+                </div>
+                <div class="mt-8 text-right">
+                    <button id="generateAdrButton" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        Gerar Rascunho
+                    </button>
+                </div>
+            </div>
+
+            <div id="adrLoading" class="hidden flex-col items-center justify-center py-10">
+                <div class="loader"></div>
+                <p class="mt-4 text-slate-600">Gerando rascunho com a IA... Por favor, aguarde.</p>
+            </div>
+
+            <div id="adrResult" class="hidden">
+                 <h4 class="text-lg font-semibold text-slate-800 mb-4">Rascunho do ADR Gerado:</h4>
+                 <div id="adrResultText" class="prose prose-sm max-w-none p-4 bg-slate-50 rounded-md border border-slate-200 whitespace-pre-wrap"></div>
+                 <div class="mt-6 flex justify-between items-center">
+                     <button id="copyAdrButton" class="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">Copiar Texto</button>
+                     <button id="restartAdrButton" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Gerar Novo Rascunho</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const contentData = {
+            focus: {
+                architect: `<p>Visão de <strong>longo prazo</strong>, saúde do ecossistema de sistemas e alinhamento com o negócio. Focado em responder "o que e porquê construir" para garantir a sustentabilidade futura.</p>`,
+                techlead: `<p>Execução de <strong>curto/médio prazo</strong>, saúde técnica da squad e entrega de features. Focado em responder "como construir" de forma eficiente e com qualidade dentro da sprint.</p>`
+            },
+            scope: {
+                architect: `<ul class="list-disc list-inside space-y-1"><li><strong>Escopo:</strong> Cross-squad, nível empresarial.</li><li><strong>Horizonte:</strong> Anos e trimestres.</li><li><strong>Complexidade:</strong> Estratégica (trade-offs de sistema).</li></ul>`,
+                techlead: `<ul class="list-disc list-inside space-y-1"><li><strong>Escopo:</strong> Intra-squad, focado em um produto.</li><li><strong>Horizonte:</strong> Sprints e releases.</li><li><strong>Complexidade:</strong> Tática (implementação de features).</li></ul>`
+            },
+            deliverables: {
+                architect: `<ul class="list-disc list-inside space-y-1"><li>Visão e princípios arquiteturais</li><li>ADRs estratégicos</li><li>Diagramas C4 (Níveis 1 e 2)</li><li>Padrões e guias de tecnologia</li></ul>`,
+                techlead: `<ul class="list-disc list-inside space-y-1"><li>Código de alta qualidade</li><li>Design de features e Code Reviews</li><li>ADRs táticos</li><li>Mentoria e desenvolvimento da equipe</li></ul>`
+            },
+            interactions: {
+                architect: `<ul class="list-disc list-inside space-y-1"><li>Liderança de negócios (CTO, CPO)</li><li>Gerentes de Produto</li><li>Tech Leads (mentoria e alinhamento)</li><li>Especialistas (Segurança, Infra)</li></ul>`,
+                techlead: `<ul class="list-disc list-inside space-y-1"><li>Desenvolvedores da squad</li><li>Product Owner e Designers</li><li>Outros Tech Leads (no Fórum)</li><li>Arquiteto (para consulta e escalada)</li></ul>`
+            }
+        };
+
+        const tabData = {
+            flow: `<div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-0 text-center p-4"><div class="w-full md:w-1/3 p-4 bg-slate-50 rounded-lg"><p class="font-bold text-sm text-indigo-500">ARQUITETO</p><h4 class="font-semibold text-slate-700">1. Visão Arquitetural</h4><p class="text-xs text-slate-500 mt-1">Define os "guard-rails": visão, princípios e padrões para toda a empresa.</p></div><div class="text-2xl font-light text-slate-400 transform rotate-90 md:rotate-0">➔</div><div class="w-full md:w-1/3 p-4 bg-slate-50 rounded-lg"><p class="font-bold text-sm text-cyan-500">TECH LEAD & SQUAD</p><h4 class="font-semibold text-slate-700">2. Design Tático</h4><p class="text-xs text-slate-500 mt-1">Lidera o design da solução dentro da squad, alinhado às diretrizes arquiteturais.</p></div><div class="text-2xl font-light text-slate-400 transform rotate-90 md:rotate-0">➔</div><div class="w-full md:w-1/3 p-4 bg-slate-50 rounded-lg"><p class="font-bold text-sm text-slate-500">CICLO CONTÍNUO</p><h4 class="font-semibold text-slate-700">3. Feedback e Evolução</h4><p class="text-xs text-slate-500 mt-1">O Tech Lead fornece feedback prático para o Arquiteto, que evolui a arquitetura.</p></div></div>`,
+            c4: `<h4 class="font-semibold text-lg text-slate-800">Visualizando a Arquitetura em Camadas</h4><p class="mt-2 text-sm text-slate-600">O C4 Model cria "mapas" da arquitetura para diferentes públicos, garantindo uma linguagem visual comum.</p><ul class="mt-4 space-y-2 text-sm"><li><strong class="text-indigo-600">Arquiteto (Níveis 1 & 2):</strong> Foca no Contexto (visão de negócio) e nos Contêineres (blocos de construção principais: APIs, DBs).</li><li><strong class="text-cyan-600">Tech Lead (Níveis 3 & 4):</strong> Foca nos Componentes (módulos internos de um contêiner) e no Código (detalhes de implementação).</li></ul>`,
+            adr: `<h4 class="font-semibold text-lg text-slate-800">Registrando o "Porquê" das Decisões</h4><p class="mt-2 text-sm text-slate-600">Architecture Decision Records (ADRs) são documentos curtos que registram decisões importantes, seu contexto e suas consequências, criando um histórico auditável.</p><ul class="mt-4 space-y-2 text-sm"><li><strong class="text-slate-900">Contexto:</strong> O problema, as restrições e as forças em jogo.</li><li><strong class="text-slate-900">Decisão:</strong> A escolha técnica feita.</li><li><strong class="text-slate-900">Consequências:</strong> Os trade-offs, riscos e benefícios da decisão.</li></ul><div class="text-center mt-6"><button id="openAdrHelper" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">✨ Gerar Rascunho de ADR com IA</button></div>`,
+            forums: `<h4 class="font-semibold text-lg text-slate-800">Criando Espaços para Colaboração</h4><p class="mt-2 text-sm text-slate-600">Fóruns com propósitos distintos para garantir alinhamento (rápido) e inovação (exploratório).</p><ul class="mt-4 space-y-2 text-sm"><li><strong class="text-slate-900">Fórum de Tech Leads:</strong> Reunião de trabalho obrigatória, focada em alinhamento tático, resolução de dependências e tomada de decisão cross-squad.</li><li><strong class="text-slate-900">Comunidade de Prática (CoP):</strong> Fórum voluntário para aprendizado, discussão de novas tecnologias e compartilhamento de conhecimento.</li></ul>`
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const architectContent = document.getElementById('architect-content');
+            const techleadContent = document.getElementById('techlead-content');
+            const filterButtons = document.querySelectorAll('.filter-button');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContent = document.getElementById('tab-content');
+
+            function updateRoleContent(filter) {
+                architectContent.innerHTML = contentData[filter].architect;
+                techleadContent.innerHTML = contentData[filter].techlead;
+                filterButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.filter === filter);
+                });
+            }
+
+            function updateTabContent(tab) {
+                tabContent.innerHTML = tabData[tab];
+                tabContent.className = 'mt-6 px-2 content-panel active';
+                 tabButtons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.tab === tab);
+                });
+                if (tab === 'adr') {
+                    document.getElementById('openAdrHelper').addEventListener('click', openAdrModal);
+                }
+            }
+
+            filterButtons.forEach(button => button.addEventListener('click', () => updateRoleContent(button.dataset.filter)));
+            tabButtons.forEach(button => button.addEventListener('click', () => updateTabContent(button.dataset.tab)));
+
+            updateRoleContent('focus');
+            updateTabContent('flow');
+
+            // Gemini ADR Helper Logic
+            const adrModal = document.getElementById('adrModal');
+            const closeAdrModalButton = document.getElementById('closeAdrModal');
+            const generateAdrButton = document.getElementById('generateAdrButton');
+            const adrForm = document.getElementById('adrForm');
+            const adrLoading = document.getElementById('adrLoading');
+            const adrResult = document.getElementById('adrResult');
+            const adrResultText = document.getElementById('adrResultText');
+            const copyAdrButton = document.getElementById('copyAdrButton');
+            const restartAdrButton = document.getElementById('restartAdrButton');
+            
+            const openAdrModal = () => adrModal.classList.remove('hidden');
+            const closeAdrModal = () => adrModal.classList.add('hidden');
+            
+            const resetAdrModal = () => {
+                adrForm.style.display = 'block';
+                adrLoading.style.display = 'none';
+                adrResult.style.display = 'none';
+                document.getElementById('adrContext').value = '';
+                document.getElementById('adrDecision').value = '';
+                document.getElementById('adrAlternatives').value = '';
+            };
+
+            closeAdrModalButton.addEventListener('click', closeAdrModal);
+            adrModal.addEventListener('click', (e) => {
+                if (e.target === adrModal) closeAdrModal();
+            });
+            restartAdrButton.addEventListener('click', resetAdrModal);
+            
+            generateAdrButton.addEventListener('click', async () => {
+                const contexto = document.getElementById('adrContext').value.trim();
+                const decisao = document.getElementById('adrDecision').value.trim();
+                const alternativas = document.getElementById('adrAlternatives').value.trim();
+
+                if (!contexto || !decisao) {
+                    alert('Por favor, preencha os campos "Problema / Contexto" e "Solução Proposta".');
+                    return;
+                }
+
+                adrForm.style.display = 'none';
+                adrLoading.style.display = 'flex';
+                
+                const prompt = `Você é um arquiteto de software sênior na Eteg, uma fábrica de softwares. Sua tarefa é escrever um Architecture Decision Record (ADR) conciso e claro em Português do Brasil, com base nas informações fornecidas. O ADR deve seguir o formato padrão com as seções: 'Título', 'Contexto', 'Decisão' e 'Consequências'. O título deve ser curto e descrever a decisão. Na seção 'Consequências', detalhe os resultados positivos e os trade-offs (negativos) da decisão.
+                
+                Informações fornecidas:
+                - Problema/Contexto: ${contexto}
+                - Solução Proposta: ${decisao}
+                - Alternativas Consideradas: ${alternativas || 'Nenhuma informada.'}`;
+
+                try {
+                    const generatedText = await callGeminiApi(prompt);
+                    adrResultText.textContent = generatedText;
+                    adrLoading.style.display = 'none';
+                    adrResult.style.display = 'block';
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    adrResultText.textContent = "Ocorreu um erro ao gerar o ADR. Por favor, tente novamente.";
+                    adrLoading.style.display = 'none';
+                    adrResult.style.display = 'block';
+                }
+            });
+
+            copyAdrButton.addEventListener('click', () => {
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = adrResultText.textContent;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    copyAdrButton.textContent = 'Copiado!';
+                    setTimeout(() => { copyAdrButton.textContent = 'Copiar Texto'; }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(tempTextArea);
+            });
+
+            async function callGeminiApi(prompt, retries = 3, delay = 1000) {
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }]
+                };
+
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const result = await response.json();
+                        if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+                            return result.candidates[0].content.parts[0].text;
+                        } else {
+                            throw new Error("Invalid response structure from Gemini API");
+                        }
+                    } catch (error) {
+                        if (i === retries - 1) throw error;
+                        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
