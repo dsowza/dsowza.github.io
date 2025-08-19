@@ -113,6 +113,13 @@
                         </select>
                     </div>
                 </div>
+                
+                <!-- Campo de Texto Livre -->
+                <div class="mt-4">
+                    <label for="summary-instructions" class="block text-sm font-medium text-gray-700">Instruções para o Resumo (Opcional)</label>
+                    <textarea id="summary-instructions" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500" placeholder="Ex: Foque nos impedimentos e desafios. / Crie um resumo sobre o andamento da sprint para a diretoria."></textarea>
+                </div>
+
                 <button id="generate-summary" class="mt-6 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg" disabled>
                     Gerar Resumo com Gemini
                 </button>
@@ -183,6 +190,7 @@
         const spacesSelect = document.getElementById('spaces-select');
         const foldersSelect = document.getElementById('folders-select');
         const listsSelect = document.getElementById('lists-select');
+        const summaryInstructionsInput = document.getElementById('summary-instructions');
         const generateSummaryBtn = document.getElementById('generate-summary');
         const downloadDocxBtn = document.getElementById('download-docx-btn');
         const loader = document.getElementById('loader');
@@ -475,8 +483,12 @@
         generateSummaryBtn.addEventListener('click', async () => {
             const listId = listsSelect.value;
             const userId = usersSelect.value;
+            const userInstructions = summaryInstructionsInput.value.trim();
+
             console.log(`--- Iniciando Geração de Resumo ---`);
             console.log(`ID da Lista (Sprint): ${listId}, ID do Usuário: ${userId || 'Nenhum'}`);
+            console.log(`Instruções do usuário: ${userInstructions || 'Nenhuma'}`);
+
 
             if (!listId) {
                 showError("Por favor, selecione uma sprint/lista.");
@@ -563,10 +575,15 @@
                 const personName = userId ? usersSelect.options[usersSelect.selectedIndex].text : "a equipe";
                 const sprintName = listsSelect.options[listsSelect.selectedIndex].text;
 
+                // Adiciona as instruções do usuário ao prompt se existirem
+                const instructionsSection = userInstructions 
+                    ? `\nInstrução adicional do usuário para guiar o resumo: "${userInstructions}"\n`
+                    : '';
+
                 const finalPrompt = `
 Por favor, atue como um sistema de apoio ao Gerente de Projetos analisando o trabalho realizado.
 Com base nos seguintes dados de tarefas do ClickUp para a sprint "${sprintName}", gere um resumo conciso e informativo sobre o que ${personName} realizou.
-
+${instructionsSection}
 O resumo deve:
 1.  Destacar as principais realizações e tarefas concluídas.
 2.  Mencionar o progresso geral.
