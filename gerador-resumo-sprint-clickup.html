@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Resumo ClickUp com Gemini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" xintegrity="sha512-Qlv6VSKh1gDKGoJbnyA5Nwppb9UfO+zENbVStDO9iAlxfsAjdapnCKvVqecjvIzS4yLPAxfHt52jGCRj1EVgDw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo para o loader */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Estilos para o conteúdo do resumo gerado */
+        #summary-output h1, #summary-output h2, #summary-output h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #summary-output ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+        }
+        #summary-output li {
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Gerador de Resumo de Sprints</h1>
+            <p class="text-gray-600 mt-2">Use o Gemini para criar resumos automáticos das suas tarefas do ClickUp.</p>
+        </header>
+
+        <main class="bg-white p-6 rounded-2xl shadow-lg">
+            
+            <!-- Seção da API Key -->
+            <div class="mb-6 border-b pb-6">
+                <h2 class="text-xl font-semibold mb-3">1. Configuração da API</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="clickup-api-key" class="block text-sm font-medium text-gray-700 mb-1">ClickUp API Key</label>
+                        <input type="password" id="clickup-api-key" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Cole sua chave de API do ClickUp aqui">
+                    </div>
+                    <div>
+                        <label for="gemini-api-key" class="block text-sm font-medium text-gray-700 mb-1">Gemini API Key</label>
+                        <input type="password" id="gemini-api-key" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Cole sua chave de API do Gemini aqui">
+                    </div>
+                </div>
+                <button id="save-api-key" class="mt-4 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">Salvar e Carregar Dados</button>
+                <p class="text-xs text-gray-500 mt-2">Suas chaves de API são salvas apenas no seu navegador (localStorage).</p>
+            </div>
+
+            <!-- Seção de Filtros -->
+            <div id="filters-section" class="hidden">
+                <h2 class="text-xl font-semibold mb-4">2. Selecione os Filtros</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Times -->
+                    <div>
+                        <label for="teams-select" class="block text-sm font-medium text-gray-700">Time</label>
+                        <select id="teams-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500" disabled>
+                            <option>Selecione um time</option>
+                        </select>
+                    </div>
+                    <!-- Pessoas -->
+                    <div>
+                        <label for="users-select" class="block text-sm font-medium text-gray-700">Pessoa (Opcional)</label>
+                        <select id="users-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500" disabled>
+                            <option value="">Resumo geral da sprint</option>
+                        </select>
+                    </div>
+                    <!-- Espaços -->
+                    <div>
+                        <label for="spaces-select" class="block text-sm font-medium text-gray-700">Espaço</label>
+                        <select id="spaces-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500" disabled>
+                            <option>Selecione um espaço</option>
+                        </select>
+                    </div>
+                    <!-- Diretórios (Folders) -->
+                    <div>
+                        <label for="folders-select" class="block text-sm font-medium text-gray-700">Diretório</label>
+                        <select id="folders-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500" disabled>
+                            <option>Selecione um diretório</option>
+                        </select>
+                    </div>
+                    <!-- Sprints (Lists) -->
+                    <div class="md:col-span-2">
+                        <label for="lists-select" class="block text-sm font-medium text-gray-700">Sprint / Lista</label>
+                        <select id="lists-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500" disabled>
+                            <option>Selecione uma sprint</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="generate-summary" class="mt-6 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg" disabled>
+                    Gerar Resumo com Gemini
+                </button>
+            </div>
+
+            <!-- Seção de Resultado -->
+            <div id="result-section" class="mt-8">
+                <div class="flex justify-between items-center border-t pt-6 mb-4">
+                    <h2 class="text-xl font-semibold">3. Resumo Gerado</h2>
+                    <button id="download-docx-btn" class="hidden bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors shadow">
+                        Baixar DOCX
+                    </button>
+                </div>
+                <div id="loader" class="hidden justify-center items-center flex-col">
+                    <div class="loader"></div>
+                    <p class="mt-3 text-gray-600">Gerando resumo... Isso pode levar um momento.</p>
+                </div>
+                <div id="error-message" class="hidden p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg"></div>
+                <div id="summary-output" class="p-6 bg-gray-50 border border-gray-200 rounded-lg min-h-[100px]">
+                    <p class="text-gray-500">O resumo aparecerá aqui.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Elementos do DOM
+        const apiKeyInput = document.getElementById('clickup-api-key');
+        const geminiApiKeyInput = document.getElementById('gemini-api-key');
+        const saveApiKeyBtn = document.getElementById('save-api-key');
+        const filtersSection = document.getElementById('filters-section');
+        const teamsSelect = document.getElementById('teams-select');
+        const usersSelect = document.getElementById('users-select');
+        const spacesSelect = document.getElementById('spaces-select');
+        const foldersSelect = document.getElementById('folders-select');
+        const listsSelect = document.getElementById('lists-select');
+        const generateSummaryBtn = document.getElementById('generate-summary');
+        const downloadDocxBtn = document.getElementById('download-docx-btn');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('error-message');
+        const summaryOutput = document.getElementById('summary-output');
+
+        const CLICKUP_API_BASE = 'https://api.clickup.com/api/v2';
+        let clickupApiKey = '';
+        let geminiApiKey = '';
+        let allTeamsData = []; // Variável para armazenar os dados dos times e seus membros
+
+        // --- Funções de API ---
+
+        /**
+         * Função genérica para fazer chamadas à API do ClickUp
+         * @param {string} endpoint O endpoint da API a ser chamado
+         * @returns {Promise<any>} O resultado da API em JSON
+         */
+        async function fetchClickUp(endpoint) {
+            const headers = {
+                'Authorization': clickupApiKey,
+                'Content-Type': 'application/json'
+            };
+            try {
+                const response = await fetch(`${CLICKUP_API_BASE}${endpoint}`, { headers });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`ClickUp API Error: ${errorData.err} (Code: ${errorData.ECODE})`);
+                }
+                return await response.json();
+            } catch (error)
+{
+                showError(error.message);
+                throw error; // Re-throw para parar a execução
+            }
+        }
+
+        /**
+         * Gera um resumo usando a API do Gemini
+         * @param {string} prompt O prompt para enviar ao Gemini
+         * @returns {Promise<string>} O texto do resumo gerado
+         */
+        async function generateSummaryWithGemini(prompt) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            let attempts = 0;
+            const maxAttempts = 5;
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Gemini API Error: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        throw new Error("Resposta inesperada da API do Gemini.");
+                    }
+                } catch (error) {
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        showError(error.message);
+                        throw error;
+                    }
+                    const delay = Math.pow(2, attempts) * 1000; // Exponential backoff
+                    await new Promise(res => setTimeout(res, delay));
+                }
+            }
+        }
+
+        // --- Funções de UI ---
+
+        /**
+         * Exibe uma mensagem de erro na UI
+         * @param {string} message A mensagem a ser exibida
+         */
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            loader.classList.add('hidden');
+        }
+
+        /**
+         * Limpa a mensagem de erro
+         */
+        function clearError() {
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Reseta e desabilita os selects filhos
+         * @param {HTMLElement[]} selects Os elementos select a serem resetados
+         */
+        function resetSelects(...selects) {
+            selects.forEach(select => {
+                select.innerHTML = `<option>--</option>`;
+                select.disabled = true;
+            });
+            generateSummaryBtn.disabled = true;
+        }
+
+        /**
+         * Popula um elemento select com opções
+         * @param {HTMLSelectElement} selectElement O elemento a ser populado
+         * @param {Array<object>} items Os itens para as opções
+         * @param {string} valueKey A chave para o valor da opção
+         * @param {string} textKey A chave para o texto da opção
+         * @param {string} placeholder O texto inicial
+         */
+        function populateSelect(selectElement, items, valueKey, textKey, placeholder) {
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                selectElement.appendChild(option);
+            });
+            selectElement.disabled = false;
+        }
+
+        // --- Lógica Principal e Event Listeners ---
+
+        /**
+         * Carrega as chaves de API do localStorage ao iniciar
+         */
+        window.addEventListener('load', () => {
+            const savedClickupApiKey = localStorage.getItem('clickupApiKey');
+            if (savedClickupApiKey) {
+                apiKeyInput.value = savedClickupApiKey;
+                clickupApiKey = savedClickupApiKey;
+                filtersSection.classList.remove('hidden');
+                loadInitialData();
+            }
+            const savedGeminiApiKey = localStorage.getItem('geminiApiKey');
+            if (savedGeminiApiKey) {
+                geminiApiKeyInput.value = savedGeminiApiKey;
+                geminiApiKey = savedGeminiApiKey;
+            }
+        });
+
+        /**
+         * Salva as chaves de API e inicia o carregamento dos dados
+         */
+        saveApiKeyBtn.addEventListener('click', () => {
+            const clickupKey = apiKeyInput.value.trim();
+            const geminiKey = geminiApiKeyInput.value.trim();
+
+            if (clickupKey) {
+                clickupApiKey = clickupKey;
+                localStorage.setItem('clickupApiKey', clickupKey);
+                filtersSection.classList.remove('hidden');
+                loadInitialData();
+            } else {
+                showError("Por favor, insira uma API key do ClickUp.");
+            }
+            if(geminiKey) {
+                geminiApiKey = geminiKey;
+                localStorage.setItem('geminiApiKey', geminiKey);
+            }
+        });
+
+        /**
+         * Carrega os times e armazena seus dados
+         */
+        async function loadInitialData() {
+            clearError();
+            loader.classList.remove('hidden');
+            summaryOutput.innerHTML = '<p class="text-gray-500">O resumo aparecerá aqui.</p>';
+            try {
+                const data = await fetchClickUp('/team');
+                allTeamsData = data.teams; // Armazena os dados completos dos times
+                populateSelect(teamsSelect, allTeamsData, 'id', 'name', 'Selecione um time');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Event listener para a seleção de time
+         */
+        teamsSelect.addEventListener('change', async () => {
+            const teamId = teamsSelect.value;
+            resetSelects(usersSelect, spacesSelect, foldersSelect, listsSelect);
+            if (!teamId) return;
+
+            loader.classList.remove('hidden');
+            try {
+                // Carrega os espaços para o time selecionado
+                const spacesPromise = fetchClickUp(`/team/${teamId}/space?archived=false`);
+
+                // Encontra o time selecionado nos dados já carregados para obter os membros
+                const selectedTeam = allTeamsData.find(team => team.id == teamId);
+                if (!selectedTeam) {
+                    showError("Time selecionado não encontrado.");
+                    loader.classList.add('hidden');
+                    return;
+                }
+                
+                // Popula a lista de usuários a partir dos dados armazenados
+                let members = selectedTeam.members.map(m => m.user);
+                
+                // Filtra usuários sem nome de usuário e ordena alfabeticamente
+                members = members
+                    .filter(user => user.username)
+                    .sort((a, b) => a.username.localeCompare(b.username));
+
+                populateSelect(usersSelect, members, 'id', 'username', 'Todos (resumo geral)');
+
+                // Espera o carregamento dos espaços e então popula o select de espaços
+                const spacesData = await spacesPromise;
+                populateSelect(spacesSelect, spacesData.spaces, 'id', 'name', 'Selecione um espaço');
+
+            } catch (error) {
+                // O erro já é exibido na função fetchClickUp
+                console.error("Erro ao carregar dados do time:", error);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+        
+        /**
+         * Event listener para a seleção de espaço
+         */
+        spacesSelect.addEventListener('change', async () => {
+            const spaceId = spacesSelect.value;
+            resetSelects(foldersSelect, listsSelect);
+            if (!spaceId) return;
+
+            loader.classList.remove('hidden');
+            try {
+                const data = await fetchClickUp(`/space/${spaceId}/folder?archived=false`);
+                populateSelect(foldersSelect, data.folders, 'id', 'name', 'Selecione um diretório');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+
+        /**
+         * Event listener para a seleção de diretório
+         */
+        foldersSelect.addEventListener('change', async () => {
+            const folderId = foldersSelect.value;
+            resetSelects(listsSelect);
+            if (!folderId) return;
+
+            loader.classList.remove('hidden');
+            try {
+                const data = await fetchClickUp(`/folder/${folderId}/list?archived=false`);
+                populateSelect(listsSelect, data.lists, 'id', 'name', 'Selecione uma sprint/lista');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+        
+        /**
+         * Event listener para a seleção de lista/sprint
+         */
+        listsSelect.addEventListener('change', () => {
+            if (listsSelect.value) {
+                generateSummaryBtn.disabled = false;
+            } else {
+                generateSummaryBtn.disabled = true;
+            }
+        });
+
+        /**
+         * Event listener para o botão de gerar resumo
+         */
+        generateSummaryBtn.addEventListener('click', async () => {
+            const listId = listsSelect.value;
+            const userId = usersSelect.value;
+            console.log(`--- Iniciando Geração de Resumo ---`);
+            console.log(`ID da Lista (Sprint): ${listId}, ID do Usuário: ${userId || 'Nenhum'}`);
+
+            if (!listId) {
+                showError("Por favor, selecione uma sprint/lista.");
+                return;
+            }
+            if (!geminiApiKey) {
+                showError("Por favor, insira uma API key do Gemini.");
+                return;
+            }
+
+            clearError();
+            downloadDocxBtn.classList.add('hidden');
+            loader.classList.remove('hidden');
+            summaryOutput.innerHTML = '';
+            generateSummaryBtn.disabled = true;
+
+            try {
+                // 1. Obter todas as tarefas da lista, incluindo as de múltiplas listas
+                let allTasks = [];
+                let page = 0;
+                let hasMoreTasks = true;
+                
+                console.log("Iniciando busca de tarefas da lista com o parâmetro 'include_timl'...");
+                while (hasMoreTasks) {
+                    const endpoint = `/list/${listId}/task?archived=false&include_closed=true&subtasks=true&page=${page}&include_timl=true`;
+                    console.log(`Buscando página ${page} com o endpoint: ${endpoint}`);
+
+                    const tasksData = await fetchClickUp(endpoint);
+                    
+                    if (tasksData.tasks && tasksData.tasks.length > 0) {
+                        console.log(`Encontradas ${tasksData.tasks.length} tarefas na página ${page}.`);
+                        allTasks = allTasks.concat(tasksData.tasks);
+                        page++;
+                    } else {
+                        console.log("Não há mais tarefas para esta lista.");
+                        hasMoreTasks = false;
+                    }
+                }
+                console.log(`Busca finalizada. Total de tarefas encontradas: ${allTasks.length}`);
+                console.log("Dados brutos das tarefas:", allTasks);
+                
+                let tasks = allTasks;
+
+                // 2. Filtrar por usuário, se selecionado
+                if (userId) {
+                    console.log(`Filtrando tarefas para o usuário ID: ${userId}`);
+                    tasks = tasks.filter(task => {
+                        const isAssigned = task.assignees.some(assignee => assignee.id == userId);
+                        if (!isAssigned) {
+                            console.log(`Tarefa "${task.name}" (ID: ${task.id}) descartada por não pertencer ao usuário.`);
+                        }
+                        return isAssigned;
+                    });
+                    console.log(`Número de tarefas após o filtro de usuário: ${tasks.length}`);
+                }
+
+                if (tasks.length === 0) {
+                    console.warn("Nenhuma tarefa encontrada após os filtros. Exibindo mensagem ao usuário.");
+                    summaryOutput.innerHTML = '<p class="text-gray-600">Nenhuma tarefa encontrada para os filtros selecionados.</p>';
+                    loader.classList.add('hidden');
+                    generateSummaryBtn.disabled = false;
+                    return;
+                }
+
+                // 3. Obter comentários para cada tarefa (pode ser demorado)
+                console.log("Buscando comentários para as tarefas filtradas...");
+                const tasksWithComments = await Promise.all(tasks.map(async task => {
+                    const commentsData = await fetchClickUp(`/task/${task.id}/comment`);
+                    return { ...task, comments: commentsData.comments };
+                }));
+
+                // 4. Construir o prompt para o Gemini
+                console.log("Construindo o prompt para o Gemini...");
+                let promptData = tasksWithComments.map(task => {
+                    let taskInfo = `
+- Título da Tarefa: "${task.name}"
+- Status: ${task.status.status}
+- Descrição: ${task.description || 'Nenhuma descrição.'}
+- Comentários: ${task.comments.length > 0 ? task.comments.map(c => `  - ${c.user.username}: "${c.comment_text}"`).join('\n') : 'Nenhum comentário.'}
+                    `;
+                    return taskInfo;
+                }).join('\n');
+                
+                const personName = userId ? usersSelect.options[usersSelect.selectedIndex].text : "a equipe";
+                const sprintName = listsSelect.options[listsSelect.selectedIndex].text;
+
+                const finalPrompt = `
+Por favor, atue como um sistema de apoio ao Gerente de Projetos analisando o trabalho realizado.
+Com base nos seguintes dados de tarefas do ClickUp para a sprint "${sprintName}", gere um resumo conciso e informativo sobre o que ${personName} realizou.
+
+O resumo deve:
+1.  Destacar as principais realizações e tarefas concluídas.
+2.  Mencionar o progresso geral.
+3.  Se houver informações nos comentários que sugiram desafios ou bloqueios, mencione-os de forma construtiva.
+4.  Use um tom profissional e direto. Formate o resultado em markdown para melhor legibilidade, usando títulos e listas.
+
+Aqui estão os dados das tarefas:
+${promptData}
+                `;
+                console.log("Prompt final enviado para o Gemini:", finalPrompt);
+
+                // 5. Chamar o Gemini e exibir o resultado
+                console.log("Enviando requisição para a API do Gemini...");
+                const summary = await generateSummaryWithGemini(finalPrompt);
+                console.log("Resumo recebido do Gemini.");
+                
+                // Converte o markdown em HTML e exibe
+                summaryOutput.innerHTML = marked.parse(summary); 
+                downloadDocxBtn.classList.remove('hidden'); // Mostra o botão de download
+
+            } catch (error) {
+                // O erro já é exibido pela função fetchClickUp ou generateSummaryWithGemini
+                console.error("Falha ao gerar resumo:", error);
+            } finally {
+                console.log("--- Fim da Geração de Resumo ---");
+                loader.classList.add('hidden');
+                generateSummaryBtn.disabled = false;
+            }
+        });
+
+        /**
+         * Event listener para o botão de download do DOCX
+         */
+        downloadDocxBtn.addEventListener('click', () => {
+            const sprintName = listsSelect.options[listsSelect.selectedIndex].text.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const personName = usersSelect.value ? usersSelect.options[usersSelect.selectedIndex].text.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'geral';
+            const filename = `resumo_sprint_${sprintName}_${personName}.docx`;
+
+            // **MELHORIA NOS ESTILOS PARA O DOCX**
+            // Cria um HTML completo com estilos embutidos para a conversão.
+            const styledContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 11pt;
+                        }
+                        h1, h2, h3, h4, h5, h6 {
+                            font-weight: bold;
+                            margin-top: 12pt;
+                            margin-bottom: 6pt;
+                        }
+                        h1 { font-size: 16pt; }
+                        h2 { font-size: 14pt; }
+                        h3 { font-size: 12pt; }
+                        p {
+                            margin-bottom: 10pt;
+                            line-height: 1.5;
+                        }
+                        ul, ol {
+                            margin-bottom: 10pt;
+                            padding-left: 40px;
+                        }
+                        li {
+                            margin-bottom: 4pt;
+                        }
+                        pre, code {
+                            font-family: 'Courier New', Courier, monospace;
+                            font-size: 10pt;
+                            background-color: #f1f1f1;
+                            padding: 2px 4px;
+                            border-radius: 3px;
+                        }
+                        blockquote {
+                            border-left: 2px solid #cccccc;
+                            padding-left: 10px;
+                            margin-left: 5px;
+                            color: #555555;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${summaryOutput.innerHTML}
+                </body>
+                </html>
+            `;
+            
+            // Converte o HTML estilizado para um blob de DOCX
+            const converted = htmlDocx.asBlob(styledContent);
+            
+            // Usa FileSaver.js para iniciar o download
+            saveAs(converted, filename);
+        });
+
+    </script>
+</body>
+</html>
