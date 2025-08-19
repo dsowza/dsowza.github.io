@@ -67,8 +67,10 @@
                         <input type="password" id="gemini-api-key" class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Cole sua chave de API do Gemini aqui">
                     </div>
                 </div>
-                <button id="save-api-key" class="mt-4 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">Salvar e Carregar Dados</button>
-                <p class="text-xs text-gray-500 mt-2">Suas chaves de API são salvas apenas no seu navegador (localStorage).</p>
+                <div class="flex items-center justify-between mt-4">
+                    <button id="save-api-key" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">Salvar e Carregar Dados</button>
+                    <button id="open-help-modal" class="text-sm text-blue-600 hover:underline">Precisa de ajuda para encontrar as chaves?</button>
+                </div>
             </div>
 
             <!-- Seção de Filtros -->
@@ -136,6 +138,40 @@
         </main>
     </div>
 
+    <!-- Modal de Ajuda -->
+    <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full relative max-h-[90vh] overflow-y-auto">
+            <button id="close-help-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Como Obter suas Chaves de API</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Instruções ClickUp -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-blue-600">ClickUp API Key</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Acesse sua conta ClickUp.</li>
+                        <li>Clique no seu **avatar** no canto inferior esquerdo.</li>
+                        <li>Vá para **"My Settings"**.</li>
+                        <li>No menu à esquerda, clique em **"Apps"**.</li>
+                        <li>Sua **"API Token"** estará visível. Clique para copiar e cole no campo correspondente.</li>
+                    </ol>
+                </div>
+                <!-- Instruções Gemini -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-indigo-600">Gemini API Key</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Acesse o <a href="https://aistudio.google.com/" target="_blank" class="text-indigo-500 hover:underline">**Google AI Studio**</a>.</li>
+                        <li>Faça login com sua conta Google.</li>
+                        <li>No menu à esquerda, clique em **"Get API key"**.</li>
+                        <li>Clique no botão **"Create API key in new project"**.</li>
+                        <li>Uma chave será gerada. Clique para copiar e cole no campo correspondente.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // Elementos do DOM
         const apiKeyInput = document.getElementById('clickup-api-key');
@@ -152,6 +188,9 @@
         const loader = document.getElementById('loader');
         const errorMessage = document.getElementById('error-message');
         const summaryOutput = document.getElementById('summary-output');
+        const openHelpModalBtn = document.getElementById('open-help-modal');
+        const closeHelpModalBtn = document.getElementById('close-help-modal');
+        const helpModal = document.getElementById('help-modal');
 
         const CLICKUP_API_BASE = 'https://api.clickup.com/api/v2';
         let clickupApiKey = '';
@@ -623,6 +662,22 @@ ${promptData}
             
             // Usa FileSaver.js para iniciar o download
             saveAs(converted, filename);
+        });
+
+        // --- Lógica do Modal ---
+        openHelpModalBtn.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+
+        closeHelpModalBtn.addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+
+        helpModal.addEventListener('click', (event) => {
+            // Fecha o modal se o clique for no fundo (o próprio elemento modal)
+            if (event.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
         });
 
     </script>
