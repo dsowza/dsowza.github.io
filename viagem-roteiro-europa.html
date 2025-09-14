@@ -5,11 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checklist de Viagem</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             color: #1f2937;
+        }
+        /* Style for the selected gender option */
+        input[type="radio"]:checked + div {
+            background-color: #dbeafe; /* bg-blue-100 */
+            color: #1e40af; /* text-blue-800 */
+            font-weight: bold;
+            border: 2px solid #3b82f6; /* border-blue-500 */
         }
     </style>
 </head>
@@ -22,14 +30,20 @@
         <!-- Gender Selection -->
         <div class="mb-8">
             <h2 class="text-xl font-bold mb-4 text-gray-700">Selecione o Gênero</h2>
-            <div class="flex items-center space-x-4">
-                <label class="inline-flex items-center">
-                    <input type="radio" class="form-radio h-5 w-5 text-blue-600 cursor-pointer" name="gender" value="female" id="gender-female" checked>
-                    <span class="ml-2 text-gray-700">Mulher</span>
+            <div class="flex items-center space-x-6">
+                <label class="inline-flex items-center cursor-pointer text-gray-700 font-medium">
+                    <input type="radio" class="form-radio h-5 w-5 text-blue-600 cursor-pointer hidden" name="gender" value="female" id="gender-female">
+                    <div class="flex items-center space-x-2 p-3 rounded-xl transition duration-200 ease-in-out hover:bg-gray-100 border-2 border-transparent">
+                        <i class="fas fa-venus text-2xl"></i>
+                        <span>Mulher</span>
+                    </div>
                 </label>
-                <label class="inline-flex items-center">
-                    <input type="radio" class="form-radio h-5 w-5 text-blue-600 cursor-pointer" name="gender" value="male" id="gender-male">
-                    <span class="ml-2 text-gray-700">Homem</span>
+                <label class="inline-flex items-center cursor-pointer text-gray-700 font-medium">
+                    <input type="radio" class="form-radio h-5 w-5 text-blue-600 cursor-pointer hidden" name="gender" value="male" id="gender-male">
+                    <div class="flex items-center space-x-2 p-3 rounded-xl transition duration-200 ease-in-out hover:bg-gray-100 border-2 border-transparent">
+                        <i class="fas fa-mars text-2xl"></i>
+                        <span>Homem</span>
+                    </div>
                 </label>
             </div>
         </div>
@@ -266,25 +280,39 @@
             loadChecklist();
         }
 
+        // Função para salvar a seleção de gênero no localStorage
+        function saveGenderSelection(gender) {
+            localStorage.setItem('selectedGender', gender);
+        }
+
+        // Função para carregar a seleção de gênero do localStorage
+        function loadGenderSelection() {
+            const savedGender = localStorage.getItem('selectedGender');
+            return savedGender || 'female'; // Retorna 'female' por padrão
+        }
+
         // Adiciona event listeners para a seleção de gênero
         document.getElementById('gender-female').addEventListener('change', () => {
             currentGender = 'female';
+            saveGenderSelection('female');
             renderChecklist(allItemsFemale);
         });
 
         document.getElementById('gender-male').addEventListener('change', () => {
             currentGender = 'male';
+            saveGenderSelection('male');
             renderChecklist(allItemsMale);
         });
 
         // Inicializa o checklist quando a página carrega
         window.onload = () => {
-            // Verifica o estado inicial do rádio button
-            if (document.getElementById('gender-male').checked) {
-                currentGender = 'male';
+            const savedGender = loadGenderSelection();
+            currentGender = savedGender;
+            document.getElementById(`gender-${savedGender}`).checked = true;
+
+            if (currentGender === 'male') {
                 renderChecklist(allItemsMale);
             } else {
-                currentGender = 'female';
                 renderChecklist(allItemsFemale);
             }
         };
