@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Viagem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-gray-800">Checklist de Viagem</h1>
+        <p class="text-center text-gray-500 mb-8 text-sm sm:text-base">Marque os itens à medida que os coloca na mala. Seu progresso será salvo automaticamente.</p>
+        
+        <!-- Gender Selection -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4 text-gray-700">Selecione o Gênero</h2>
+            <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="radio" class="form-radio h-5 w-5 text-blue-600 cursor-pointer" name="gender" value="female" id="gender-female" checked>
+                    <span class="ml-2 text-gray-700">Mulher</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" class="form-radio h-5 w-5 text-blue-600 cursor-pointer" name="gender" value="male" id="gender-male">
+                    <span class="ml-2 text-gray-700">Homem</span>
+                </label>
+            </div>
+        </div>
+        
+        <div id="checklist-container">
+            <!-- Items will be generated here by JavaScript -->
+        </div>
+
+        <div id="status" class="text-center mt-8 text-sm text-gray-500"></div>
+
+    </div>
+
+    <script>
+        // Checklists para cada gênero
+        const allItemsFemale = [
+            {
+                category: "Estratégia Geral: Roupas que se combinam e camadas",
+                items: [
+                    "4-5 camisetas de manga curta (neutras, para combinar)",
+                    "2-3 camisetas de manga comprida ou blusas leves",
+                    "1-2 suéteres ou blusas de fleece (peças versáteis para as noites frias e montanhas)",
+                    "2-3 calças confortáveis (jeans, calças de trekking ou sarja)",
+                    "1 jaqueta versátil (uma corta-vento/impermeável)",
+                    "1-2 vestidos ou saias leves (para Zakynthos e as cidades mais quentes)",
+                    "1 par de calças curtas ou bermudas (para Zakynthos e dias mais quentes nas cidades)",
+                    "1-2 biquínis ou maiôs (para Zakynthos)",
+                    "Meias confortáveis (pelo menos 7 pares)",
+                    "Meias de lã grossas ou térmicas (essenciais para as Dolomitas)",
+                    "Calcinhas (pelo menos 7 pares)",
+                    "Pijama",
+                    "1 par de tênis ou sapatos de caminhada confortáveis (o item mais importante!)",
+                    "1 par de sapatos mais leves, como sandálias ou chinelos (para Zakynthos e dias de descanso)"
+                ]
+            },
+            {
+                category: "Itens Específicos e Essenciais",
+                items: [
+                    { text: "Roupas térmicas (segunda pele, calça e blusa)", sub: "Para as Dolomitas" },
+                    { text: "Botas de caminhada (já amaciadas!)", sub: "Para as Dolomitas" },
+                    { text: "Jaqueta impermeável e corta-vento", sub: "Para as Dolomitas" },
+                    { text: "Gorro, luvas e cachecol", sub: "Para as Dolomitas" }
+                ]
+            },
+            {
+                category: "Opcionais para a Oktoberfest",
+                items: [
+                    { text: "Traje tradicional (Dirndl)", sub: "Opcional para a Oktoberfest" },
+                    { text: "Blusa xadrez (alternativa estilosa)", sub: "Opcional para a Oktoberfest" }
+                ]
+            },
+            {
+                category: "Itens de Uso Geral",
+                items: [
+                    "Mochila de ataque (para os passeios diários)",
+                    "Adaptador de tomada universal",
+                    "Carregador portátil (power bank)",
+                    "Garrafa de água reutilizável",
+                    "Guarda-chuva pequeno e portátil",
+                    "Óculos de sol",
+                    "Chapéu ou boné",
+                    "Toalha de microfibra (seca rápido e ocupa pouco espaço)",
+                    "Cadeado (para lockers em hostels)",
+                    "Farmacinha básica (analgésico, anti-inflamatório, band-aids, seus remédios de uso contínuo, etc.)",
+                    "Itens de higiene pessoal (shampoo, condicionador, escova de dentes, etc., em embalagens pequenas)"
+                ]
+            },
+            {
+                category: "Opcionais (Itens Não Essenciais)",
+                items: [
+                    { text: "Câmera fotográfica", sub: "Opcional" },
+                    { text: "Um casaco de lã mais pesado (para Munique e Dolomitas)", sub: "Opcional" },
+                    { text: "Maquiagem", sub: "Opcional" },
+                    { text: "Protetor solar (importante para Zakynthos)", sub: "Opcional" },
+                    { text: "Livro ou e-reader", sub: "Opcional" },
+                    { text: "Fone de ouvido", sub: "Opcional" },
+                    { text: "Acessórios (cintos, bijuterias)", sub: "Opcional" },
+                    { text: "Capa de chuva para a mochila", sub: "Opcional" }
+                ]
+            }
+        ];
+
+        const allItemsMale = [
+            {
+                category: "Estratégia Geral: Roupas que se combinam e camadas",
+                items: [
+                    "4-5 camisetas de manga curta (neutras, para combinar)",
+                    "2-3 camisetas de manga comprida ou blusas leves",
+                    "1-2 suéteres ou blusas de fleece (peças versáteis para as noites frias e montanhas)",
+                    "2-3 calças confortáveis (jeans, calças de trekking ou sarja)",
+                    "1 jaqueta versátil (uma corta-vento/impermeável)",
+                    "1 par de calças curtas ou bermudas (para Zakynthos e dias mais quentes nas cidades)",
+                    "1-2 sungas (para Zakynthos)",
+                    "Meias confortáveis (pelo menos 7 pares)",
+                    "Meias de lã grossas ou térmicas (essenciais para as Dolomitas)",
+                    "Cuecas (pelo menos 7 pares)",
+                    "Pijama",
+                    "1 par de tênis ou sapatos de caminhada confortáveis (o item mais importante!)",
+                    "1 par de sapatos mais leves, como sandálias ou chinelos (para Zakynthos e dias de descanso)"
+                ]
+            },
+            {
+                category: "Itens Específicos e Essenciais",
+                items: [
+                    { text: "Roupas térmicas (segunda pele, calça e blusa)", sub: "Para as Dolomitas" },
+                    { text: "Botas de caminhada (já amaciadas!)", sub: "Para as Dolomitas" },
+                    { text: "Jaqueta impermeável e corta-vento", sub: "Para as Dolomitas" },
+                    { text: "Gorro, luvas e cachecol", sub: "Para as Dolomitas" }
+                ]
+            },
+            {
+                category: "Opcionais para a Oktoberfest",
+                items: [
+                    { text: "Traje tradicional (Lederhosen)", sub: "Opcional para a Oktoberfest" },
+                    { text: "Blusa xadrez (alternativa estilosa)", sub: "Opcional para a Oktoberfest" }
+                ]
+            },
+            {
+                category: "Itens de Uso Geral",
+                items: [
+                    "Mochila de ataque (para os passeios diários)",
+                    "Adaptador de tomada universal",
+                    "Carregador portátil (power bank)",
+                    "Garrafa de água reutilizável",
+                    "Guarda-chuva pequeno e portátil",
+                    "Óculos de sol",
+                    "Chapéu ou boné",
+                    "Toalha de microfibra (seca rápido e ocupa pouco espaço)",
+                    "Cadeado (para lockers em hostels)",
+                    "Farmacinha básica (analgésico, anti-inflamatório, band-aids, seus remédios de uso contínuo, etc.)",
+                    "Itens de higiene pessoal (shampoo, condicionador, escova de dentes, etc., em embalagens pequenas)"
+                ]
+            },
+            {
+                category: "Opcionais (Itens Não Essenciais)",
+                items: [
+                    { text: "Câmera fotográfica", sub: "Opcional" },
+                    { text: "Um casaco de lã mais pesado (para Munique e Dolomitas)", sub: "Opcional" },
+                    { text: "Protetor solar (importante para Zakynthos)", sub: "Opcional" },
+                    { text: "Livro ou e-reader", sub: "Opcional" },
+                    { text: "Fone de ouvido", sub: "Opcional" },
+                    { text: "Acessórios (cintos, bijuterias)", sub: "Opcional" },
+                    { text: "Capa de chuva para a mochila", sub: "Opcional" }
+                ]
+            }
+        ];
+
+        let currentGender = 'female';
+
+        // Função para salvar o estado do checklist no localStorage
+        function saveChecklist() {
+            const checklistState = {};
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checklistState[checkbox.id] = checkbox.checked;
+            });
+            localStorage.setItem(`travelChecklist_${currentGender}`, JSON.stringify(checklistState));
+            updateStatus();
+        }
+
+        // Função para carregar o estado do checklist do localStorage
+        function loadChecklist() {
+            const savedState = localStorage.getItem(`travelChecklist_${currentGender}`);
+            if (savedState) {
+                const checklistState = JSON.parse(savedState);
+                for (const id in checklistState) {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = checklistState[id];
+                    }
+                }
+            } else {
+                // Se não houver estado salvo, desmarque todos os checkboxes para começar do zero
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+            updateStatus();
+        }
+
+        // Função para atualizar o status de progresso
+        function updateStatus() {
+            const totalItems = document.querySelectorAll('input[type="checkbox"]').length;
+            const checkedItems = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            const percentage = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+            const statusText = `Você já empacotou ${checkedItems} de ${totalItems} itens (${percentage}% completo)`;
+            document.getElementById('status').textContent = statusText;
+        }
+
+        // Função para renderizar o checklist
+        function renderChecklist(items) {
+            const container = document.getElementById('checklist-container');
+            container.innerHTML = '';
+            let itemId = 0;
+            items.forEach(categoryData => {
+                const categoryTitle = document.createElement('h2');
+                categoryTitle.className = 'text-xl font-bold mt-6 mb-4 text-gray-700';
+                categoryTitle.textContent = categoryData.category;
+                container.appendChild(categoryTitle);
+
+                categoryData.items.forEach(itemData => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center space-x-3 mb-2';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `item-${itemId}`;
+                    checkbox.className = 'form-checkbox h-5 w-5 text-blue-600 rounded-full cursor-pointer transition duration-150 ease-in-out';
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `item-${itemId}`;
+                    label.className = 'text-gray-700 text-base cursor-pointer';
+
+                    let itemText = typeof itemData === 'string' ? itemData : itemData.text;
+                    const subText = typeof itemData === 'object' && itemData.sub ? ` <span class="text-gray-400 text-sm">(${itemData.sub})</span>` : '';
+                    label.innerHTML = itemText + subText;
+                    
+                    item.appendChild(checkbox);
+                    item.appendChild(label);
+                    container.appendChild(item);
+                    itemId++;
+                });
+            });
+
+            // Adiciona o event listener depois de renderizar os checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', saveChecklist);
+            });
+            
+            loadChecklist();
+        }
+
+        // Adiciona event listeners para a seleção de gênero
+        document.getElementById('gender-female').addEventListener('change', () => {
+            currentGender = 'female';
+            renderChecklist(allItemsFemale);
+        });
+
+        document.getElementById('gender-male').addEventListener('change', () => {
+            currentGender = 'male';
+            renderChecklist(allItemsMale);
+        });
+
+        // Inicializa o checklist quando a página carrega
+        window.onload = () => {
+            // Verifica o estado inicial do rádio button
+            if (document.getElementById('gender-male').checked) {
+                currentGender = 'male';
+                renderChecklist(allItemsMale);
+            } else {
+                currentGender = 'female';
+                renderChecklist(allItemsFemale);
+            }
+        };
+    </script>
+
+</body>
+</html>
