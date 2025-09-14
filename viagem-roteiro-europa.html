@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checklist de Viagem Europa</title>
+    <title>Checklist de Viagem</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -178,6 +178,14 @@
 
         let currentGender = 'female';
 
+        // Função para gerar um ID único e consistente para cada item
+        function generateUniqueId(category, item) {
+            const itemText = typeof item === 'string' ? item : item.text;
+            const categorySlug = category.replace(/\s+/g, '-').replace(/[^\w-]/g, '').toLowerCase();
+            const itemSlug = itemText.replace(/\s+/g, '-').replace(/[^\w-]/g, '').toLowerCase();
+            return `${categorySlug}-${itemSlug}`;
+        }
+
         // Função para salvar o estado do checklist no localStorage
         function saveChecklist() {
             const checklistState = {};
@@ -221,7 +229,6 @@
         function renderChecklist(items) {
             const container = document.getElementById('checklist-container');
             container.innerHTML = '';
-            let itemId = 0;
             items.forEach(categoryData => {
                 const categoryTitle = document.createElement('h2');
                 categoryTitle.className = 'text-xl font-bold mt-6 mb-4 text-gray-700';
@@ -234,11 +241,11 @@
 
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.id = `item-${itemId}`;
+                    checkbox.id = generateUniqueId(categoryData.category, itemData);
                     checkbox.className = 'form-checkbox h-5 w-5 text-blue-600 rounded-full cursor-pointer transition duration-150 ease-in-out';
                     
                     const label = document.createElement('label');
-                    label.htmlFor = `item-${itemId}`;
+                    label.htmlFor = checkbox.id;
                     label.className = 'text-gray-700 text-base cursor-pointer';
 
                     let itemText = typeof itemData === 'string' ? itemData : itemData.text;
@@ -248,7 +255,6 @@
                     item.appendChild(checkbox);
                     item.appendChild(label);
                     container.appendChild(item);
-                    itemId++;
                 });
             });
 
@@ -286,4 +292,3 @@
 
 </body>
 </html>
-
